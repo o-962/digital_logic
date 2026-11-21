@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Chapter 4 · Adders → Subtraction</title><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div class="index">
+  <h1>Chapter 4 · Arithmetic Circuits</h1>
+  <div class="sub">From the half adder to the subtractor · step by step, with voice</div>
+  <div id="list"></div>
+  <div class="help">How to use: open a page and press <b>Start</b>. Every sentence is one step: you hear it, the animation runs, then the writing appears, and the page waits for you.<br>
+  <b>Next ▶</b> (or →) goes on · <b>◀ Previous</b> (or ←) goes back · <b>↻ Again</b> (R) repeats.<br>
+  On pages with a circuit, use <b>✋ Try it yourself</b> to flip the inputs and watch the circuit answer.</div>
+</div>
+<script src="js/tex.js"></script>
+<script src="js/data/index.js"></script>
+<script>
+  document.getElementById("list").innerHTML = window.PAGES.map((p, k) => '<a class="card" href="pages/' + p.file + '.html"><span class="num">' + (k + 1) + '</span><span class="t">' + window.TEX.mixed(p.title) + '</span><span class="meta"><div class="ar" dir="rtl">' + p.ar + '</div>slide ' + p.slide + ' · ' + p.n + ' sentences</span></a>').join("");
+</script>
+</body>
+</html>
