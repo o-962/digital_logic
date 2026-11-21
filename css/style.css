@@ -199,3 +199,8 @@ header .ar { margin-left: auto; color: var(--gold); font-weight: 600; font-size:
 .title-block .note { font-size: 20px; }
 /* index sections */
 .index h2 { font-size: 15px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin: 30px 0 4px; }
+
+/* an input label showing the example's value instead of its name */
+.inval { font-family: "CMU Serif", serif; font-weight: 700; padding: 0 0.25em; border-radius: 0.25em; }
+.inval.is1 { color: #4ade80; }
+.inval.is0 { color: #94a3b8; }

@@ -455,7 +455,29 @@
     const simAt = (s) => { let k = -1; (b.sim ?? []).forEach((x, j) => { if (s >= x.at && (x.to === undefined || s < x.to)) k = j; }); return k; };
     const levelStep = (sm, L) => { if (!sm.levelAt) return sm.at; const ks = Object.keys(sm.levelAt).map(Number).filter((k) => k <= L); return ks.length ? sm.levelAt[Math.max(...ks)] : sm.at; };
     const ONE = "#4ade80", ZERO = "#64748b";
+    const nameHTML = {};
+    const showValues = (vals) => { // vals: {txt index: 0/1} ; every other input label shows its name again
+      els.forEach((e, i) => {
+        if (e.e !== "txt") return;
+        const d = parts[i].querySelector(".clab");
+        if (!d) return;
+        if (!(i in nameHTML)) nameHTML[i] = d.innerHTML;
+        if (i in vals) { d.innerHTML = `<span class="inval ${vals[i] ? "is1" : "is0"}">${vals[i]}</span>`; d.classList.add("swapped"); }
+        else if (d.classList.contains("swapped")) { d.innerHTML = nameHTML[i]; d.classList.remove("swapped"); }
+      });
+    };
+    // the label(s) that name each input of the example (named inputs, or block pins "id.pin")
+    const inputLabels = (inputs) => {
+      const out = {};
+      Object.entries(inputs).forEach(([name, v]) => {
+        let nets = net.names[name] ?? [];
+        if (name.includes(".")) { const [bid, pin] = name.split("."); const p = net.boxes.find((q) => q.id === bid)?.pins.find((q) => q.name === pin); nets = p && p.net >= 0 ? [p.net] : []; }
+        nets.forEach((nid) => Object.keys(net.labelNet).map(Number).forEach((t) => { if (net.labelNet[t] === nid && els[t].from === undefined && els[t].until === undefined && !els[t].plain) out[t] = v; }));
+      });
+      return out;
+    };
     const clearSim = () => {
+      showValues({});
       tagLayer.innerHTML = "";
       parts.forEach((g, i) => { if (els[i].e === "wire") g.classList.remove("v1", "v0"); });
       resetIO();
@@ -504,23 +526,18 @@
           tag(pn.x + off[0], pn.y + off[1], outs[pn.name]);
         });
       });
-      Object.entries(inputs).forEach(([name, v]) => (net.names[name] ?? []).forEach((nid) => {
-        const k = Object.keys(net.labelNet).map(Number).find((t) => net.labelNet[t] === nid && els[t].s === name);
-        if (k === undefined || parts[k].classList.contains("hidden")) return;
-        const t = els[k];
-        // names written above a wire (middle) get the tag on their right, on the same line
-        const w = String(t.s).replace(/[_'’]/g, "").length * Math.max(t.size, 24) * 0.5;
-        if (t.a === "middle") tag(t.x + w / 2 + 16, t.y, v);
-        else tag(t.a === "end" ? t.x + 14 : t.x - 14, t.y - 18, v);
-      }));
+      showValues(namesBack ? {} : inputLabels(inputs));
     };
+    let namesBack = false;
     const capText = (sm) => sm.label ?? Object.entries(sm.v).map(([k, v]) => `${k} = ${v}`).join(",  ");
     const runSim = async (s, animate, rate, my = ctok) => {
       if (!net) return;
-      if (tryValues) { const r = window.SIM.simulate(net, tryValues); cap.classList.add("hidden"); paintSim(r, tryValues, 99); return; } // no label: the values are on the circuit
+      if (tryValues) { namesBack = false; const r = window.SIM.simulate(net, tryValues); cap.classList.add("hidden"); paintSim(r, tryValues, 99); return; } // no label: the values are on the circuit
       const k = simAt(s);
       if (k < 0) { clearSim(); return; }
       const sm = b.sim[k], r = window.SIM.simulate(net, sm.v);
+      // once the example has been explained (its last sentence is over), the real names come back
+      namesBack = sm.to === undefined && s >= page.lastStep && page.lastStep > sm.at;
       cap.innerHTML = "Example: " + mixed(capText(sm));
       cap.classList.remove("hidden");
       const maxL = Math.max(0, ...Object.values(r.lvl));
@@ -636,6 +653,7 @@
     create(container, page) {
       const items = [];
       page.tryables = [];
+      page.lastStep = Math.max(...page.lines.map((l) => l.s));
       if (page.kind === "title") {
         container.classList.add("title-page");
         const t = el("div", "title-block", `<div class="tp-part">${esc(page.part ?? "")}</div><div class="tp-title">${mixed(page.title)}</div><div class="tp-ar" dir="rtl">${esc(page.ar)}</div>`);
