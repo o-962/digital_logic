@@ -8,7 +8,7 @@
   document.title = `${P.title} · Chapter 4`;
   $("#title").innerHTML = mixed(P.title);
   $("#title-ar").textContent = P.ar;
-  $("#slide").textContent = /–/.test(P.slide) ? `SLIDES ${P.slide} / 65` : `SLIDE ${P.slide} / 65`;
+  $("#slide").textContent = !/^\d/.test(String(P.slide)) ? String(P.slide).toUpperCase() : /–/.test(P.slide) ? `SLIDES ${P.slide} / 65` : `SLIDE ${P.slide} / 65`;
   const at = PAGES.findIndex((p) => p.file === P.file);
   const prevPage = PAGES[at - 1], nextPage = PAGES[at + 1];
   $("#page-prev").innerHTML = prevPage ? `‹ ${mixed(prevPage.title)}` : "";
@@ -98,7 +98,7 @@
       const btn = document.createElement("button");
       btn.className = "bit" + (t.values[name] ? " one" : "");
       // block pins get the names used on the board: the first adder's A/B are the numbers x and y
-      const shown = name.includes(".") ? name.split(".")[1].replace(/^A_(\d)$/, "x_$1").replace(/^B_(\d)$/, "y_$1").replace(/^C_i$/, "carry in").replace(/^C_0$/, "carry in") : name;
+      const shown = name.includes(".") ? name.split(".")[1].replace(/^A_(\d)$/, (_, d) => `x_${+d + (name.startsWith("L.") ? 4 : 0)}`).replace(/^B_(\d)$/, (_, d) => `y_${+d + (name.startsWith("L.") ? 4 : 0)}`).replace(/^C_i$/, "carry in").replace(/^C_0$/, "carry in") : name;
       btn.innerHTML = `${mixed(shown)} = <b>${t.values[name]}</b>`;
       btn.onclick = () => { t.values[name] = t.values[name] ? 0 : 1; t.active = true; t.item.setTry({ ...t.values }, s); refreshTry(); };
       row.appendChild(btn);

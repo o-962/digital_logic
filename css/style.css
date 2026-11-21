@@ -161,3 +161,41 @@ header .ar { margin-left: auto; color: var(--gold); font-weight: 600; font-size:
 .ce.v1 .wire { stroke-width: 4.6; filter: drop-shadow(0 0 4px var(--c)); }
 .ce.v0 .wire, .ce.v0 .arrow { opacity: 0.35; }
 .ce .body { stroke-width: 2.8; }
+
+/* lamps, switches, displays inside circuits */
+.lamp-c { fill: rgba(148,163,184,0.12); stroke: #94a3b8; transition: fill 0.3s; }
+.lit-lamp .lamp-c { fill: #facc15; stroke: #fde68a; filter: drop-shadow(0 0 10px #facc15); }
+.sw-r { fill: rgba(148,163,184,0.12); stroke: #94a3b8; }
+.sw-k { fill: #94a3b8; transition: cx 0.25s; }
+.sw-on .sw-r { fill: rgba(250,204,21,0.3); stroke: #fde047; }
+.sw-on .sw-k { fill: #fde047; }
+.seg { fill: rgba(148,163,184,0.15); transition: fill 0.3s; }
+.seg.seg-on { fill: #f43f5e; filter: drop-shadow(0 0 6px #f43f5e); }
+
+/* live 7-segment display block */
+.segd { display: flex; flex-direction: column; align-items: center; gap: 6px; transition: opacity 0.4s; }
+.segd-title { font-size: 18px; color: var(--dim); }
+.segd-svg rect { fill: rgba(148,163,184,0.13); stroke: #fda4af55; stroke-width: 1; transition: fill 0.25s; }
+.segd-svg rect.on { fill: #f43f5e; }
+.segd-svg rect.focus { stroke: var(--gold); stroke-width: 4; }
+.segd-svg rect.focus-off { stroke: #f87171; stroke-dasharray: 6 4; }
+.segd-svg text { fill: #fda4af; font-family: "CMU Serif", serif; font-size: 18px; }
+.segd-code { font-size: 22px; }
+.segd-cap { font-size: 22px; font-weight: 600; min-height: 1.3em; }
+.segd-cap.is1 { color: var(--gold); } .segd-cap.is0 { color: #f87171; }
+.segd-chips { display: flex; gap: 5px; }
+.segd-chips span { width: 28px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: "CMU Serif", serif; font-size: 20px; border: 1.5px solid var(--line); }
+.segd-chips .c1 { border-color: var(--gold); color: var(--gold); }
+.segd-chips .c0 { border-color: #f87171; color: #f87171; }
+.segd-chips .cx { opacity: 0.25; }
+
+/* title pages */
+.board.title-page { align-items: center; justify-content: center; }
+.title-block { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
+.tp-part { color: var(--accent); font-size: 18px; font-weight: 600; letter-spacing: 6px; text-transform: uppercase; }
+.tp-title { font-size: 58px; font-weight: 600; }
+.tp-ar { font-size: 44px; color: var(--gold); font-weight: 700; margin-bottom: 18px; }
+.title-block .text { white-space: normal; font-size: 22px; color: var(--dim); }
+.title-block .note { font-size: 20px; }
+/* index sections */
+.index h2 { font-size: 15px; letter-spacing: 3px; color: var(--accent); text-transform: uppercase; margin: 30px 0 4px; }

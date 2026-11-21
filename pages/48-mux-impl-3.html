@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 4</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="home" href="../index.html">☰ CH 4</a>
+    <span class="badge" id="slide"></span>
+    <h1 id="title"></h1>
+    <span class="ar" id="title-ar" dir="rtl"></span>
+  </header>
+  <main class="board" id="board"></main>
+  <div class="now"><div id="now-en"></div><div id="now-ar" dir="rtl"></div></div>
+  <div class="controls">
+    <button id="prev" title="previous sentence (←)">◀ Previous</button>
+    <button id="play" title="play / pause (Space)">▶ Play</button>
+    <button id="replay" title="say it again (R)">↻ Again</button>
+    <button id="next" title="next sentence (→)">Next ▶</button>
+    <span id="counter"></span>
+    <span class="spacer"></span>
+    <label><input type="checkbox" id="auto"> Auto</label>
+    <select id="speed" title="speed"><option value="0.75">0.75×</option><option value="1" selected>1×</option><option value="1.25">1.25×</option><option value="1.5">1.5×</option></select>
+    <span class="pages"><a id="page-prev"></a><a id="page-next"></a></span>
+  </div>
+  <div class="progress"><div id="bar-fill"></div></div>
+</div>
+<div id="try" class="gone"></div>
+<div id="start"><div class="big">▶ Start</div><div class="hint">Space: play / pause · →: next · ←: previous · R: again</div></div>
+<script src="../js/data/index.js"></script>
+<script src="../js/data/48-mux-impl-3.js"></script>
+<script src="../js/tex.js"></script>
+<script src="../js/build.js"></script>
+<script src="../js/sim.js"></script>
+<script src="../js/board.js"></script>
+<script src="../js/player.js"></script>
+</body>
+</html>

@@ -397,12 +397,36 @@
         });
       } else if (e.e === "dot") html = `<circle cx="${e.x}" cy="${e.y}" r="5" fill="${dotColor(e)}"/>`;
       else if (e.e === "txt") html = fo(e.x, labelY(e), e.s, e.a, Math.max(e.size, e.plain ? 15 : 24), labelColor(i, e), e.plain, e.bold); // names never too small
+      else if (e.e === "lamp") html = `<circle class="lamp-c" cx="${e.x}" cy="${e.y}" r="${e.r ?? 16}" stroke-width="2.4"/>` + (e.label != null ? fo(e.x, e.y - (e.r ?? 16) - 14, String(e.label), "middle", 20, "#cbd5e1") : "");
+      else if (e.e === "switch") html = `<rect class="sw-r" x="${e.x - 16}" y="${e.y - 12}" width="32" height="24" rx="6" stroke-width="2.2"/><circle class="sw-k" cx="${e.x - 7}" cy="${e.y}" r="6"/>` + (e.label != null ? fo(e.x - 26, e.y, String(e.label), "end", 20, "#cbd5e1") : "");
+      else if (e.e === "cross") html = `<g stroke="#f43f5e" stroke-width="5" stroke-linecap="round"><line x1="${e.x - e.s}" y1="${e.y - e.s}" x2="${e.x + e.s}" y2="${e.y + e.s}"/><line x1="${e.x - e.s}" y1="${e.y + e.s}" x2="${e.x + e.s}" y2="${e.y - e.s}"/></g>`;
+      else if (e.e === "seg7") {
+        const { x, y } = e, sz = e.s, t = sz * 0.14, w = sz * 0.75;
+        const segs = { a: [x + t, y, w - 2 * t, t], g: [x + t, y + sz * 0.75 - t / 2, w - 2 * t, t], d: [x + t, y + sz * 1.5 - t, w - 2 * t, t], f: [x, y + t, t, sz * 0.75 - 1.5 * t], b: [x + w - t, y + t, t, sz * 0.75 - 1.5 * t], e: [x, y + sz * 0.75 + t / 2, t, sz * 0.75 - 1.5 * t], c: [x + w - t, y + sz * 0.75 + t / 2, t, sz * 0.75 - 1.5 * t] };
+        const lp = { a: [x + w / 2, y - 18], b: [x + w + 20, y + sz * 0.38], c: [x + w + 20, y + sz * 1.12], d: [x + w / 2, y + sz * 1.5 + 22], e: [x - 20, y + sz * 1.12], f: [x - 20, y + sz * 0.38], g: [x + w / 2, y + sz * 0.75 - 22] };
+        html = Object.entries(segs).map(([k, [sx, sy, sw, sh]]) => `<rect class="seg" data-seg="${k}" x="${sx}" y="${sy}" width="${sw}" height="${sh}" rx="${t / 2}" stroke="#fda4af" stroke-width="1"/>` + fo(lp[k][0], lp[k][1], k, "middle", 22, "#fda4af")).join("");
+      }
       else if (e.e === "grp") html = `<rect x="${e.x}" y="${e.y}" width="${e.w}" height="${e.h}" rx="14" fill="rgba(56,189,248,0.04)" stroke="${e.c ?? "#64748b"}" stroke-width="2" stroke-dasharray="9 6"/>` + (e.label ? fo(e.x + 10, e.y - 14, e.label, "start", 20, "#94a3b8", true) : "");
       g.innerHTML = html;
       g.classList.add("ce", "hidden");
       svg.appendChild(g);
       return g;
     });
+    // lamps and switches show the value of the wire they sit on; a 7-segment display shows its decoder's outputs
+    const ioNet = {};
+    els.forEach((e, i) => {
+      if (e.e !== "lamp" && e.e !== "switch") return;
+      let best = 34;
+      els.forEach((w, j) => { if (w.e !== "wire") return; for (const q of [w.pts[0], w.pts[w.pts.length - 1]]) { const d = Math.hypot(q[0] - e.x, q[1] - e.y); if (d < best) { best = d; ioNet[i] = allNet.wireNet[j]; } } });
+    });
+    const setIO = (i, on) => {
+      const g = parts[i], e = els[i];
+      if (e.e === "lamp") g.classList.toggle("lit-lamp", !!on);
+      if (e.e === "switch") { g.classList.toggle("sw-on", !!on); const k = g.querySelector(".sw-k"); if (k) k.setAttribute("cx", on ? e.x + 7 : e.x - 7); }
+      if (e.e === "seg7") g.querySelectorAll(".seg").forEach((r) => r.classList.toggle("seg-on", String(on).includes(r.dataset.seg)));
+    };
+    const resetIO = () => els.forEach((e, i) => { if (e.e === "lamp" || e.e === "switch") setIO(i, e.on); if (e.e === "seg7") setIO(i, e.on ?? "abcdefg"); });
+    resetIO();
     const tagLayer = document.createElementNS(SVGNS, "g");
     const focusLayer = document.createElementNS(SVGNS, "g");
     svg.appendChild(tagLayer); svg.appendChild(focusLayer);
@@ -434,6 +458,7 @@
     const clearSim = () => {
       tagLayer.innerHTML = "";
       parts.forEach((g, i) => { if (els[i].e === "wire") g.classList.remove("v1", "v0"); });
+      resetIO();
       cap.classList.add("hidden");
     };
     const tag = (x, y, v, key) => {
@@ -454,6 +479,13 @@
         if (v === undefined || (r.lvl[nid] ?? 0) > maxLevel) return;
         g.classList.toggle("v1", v === 1);
         g.classList.toggle("v0", v === 0);
+      });
+      els.forEach((e, i) => {
+        if ((e.e === "lamp" || e.e === "switch") && ioNet[i] !== undefined) { const v = r.val[ioNet[i]]; if (v !== undefined && (r.lvl[ioNet[i]] ?? 0) <= maxLevel) setIO(i, v === 1); }
+        if (e.e === "seg7") {
+          const bx = net.boxes.find((q) => q.label.toLowerCase().includes("7-segment")), outs = bx && r.boxOut[bx.i];
+          if (outs) setIO(i, Object.entries(outs).filter(([, v]) => v === 1).map(([k]) => k).join(""));
+        }
       });
       net.gates.forEach((gt) => {
         const v = r.gateOut[gt.i];
@@ -546,6 +578,42 @@
     return wrap;
   }
 
+  /* ======================= live seven-segment display ======================= */
+  const SEG_ON = { 0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg", 5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg" };
+  function segDisplay(b, items) {
+    const sz = (b.size ?? 120) * 1.45, t = sz * 0.15, w = sz * 0.78, x = 30, y = 20; // bigger on the website
+    const segs = { a: [x + t, y, w - 2 * t, t], g: [x + t, y + sz * 0.78 - t / 2, w - 2 * t, t], d: [x + t, y + sz * 1.56 - t, w - 2 * t, t], f: [x, y + t, t, sz * 0.78 - 1.5 * t], b: [x + w - t, y + t, t, sz * 0.78 - 1.5 * t], e: [x, y + sz * 0.78 + t / 2, t, sz * 0.78 - 1.5 * t], c: [x + w - t, y + sz * 0.78 + t / 2, t, sz * 0.78 - 1.5 * t] };
+    const lab = { a: [x + w / 2, y - 8], b: [x + w + 16, y + sz * 0.42], c: [x + w + 16, y + sz * 1.2], d: [x + w / 2, y + sz * 1.56 + 22], e: [x - 16, y + sz * 1.2], f: [x - 16, y + sz * 0.42], g: [x + w / 2, y + sz * 0.78 - 12] };
+    const wrap = el("div", "segd");
+    wrap.innerHTML = `<div class="segd-title">Display</div><svg class="segd-svg" width="${w + 60}" height="${sz * 1.56 + 50}">${Object.entries(segs).map(([k, [sx, sy, sw, sh]]) => `<rect data-seg="${k}" x="${sx}" y="${sy}" width="${sw}" height="${sh}" rx="${t / 2}"/><text x="${lab[k][0]}" y="${lab[k][1] + 6}" text-anchor="middle">${k}</text>`).join("")}</svg><div class="segd-code"></div><div class="segd-cap"></div><div class="segd-chips"></div>`;
+    const rects = [...wrap.querySelectorAll("rect")], code = wrap.querySelector(".segd-code"), cap2 = wrap.querySelector(".segd-cap"), chips = wrap.querySelector(".segd-chips");
+    const show = (d, focus, seen) => {
+      const on = SEG_ON[d];
+      rects.forEach((r) => { r.classList.toggle("on", on.includes(r.dataset.seg)); r.classList.toggle("focus", r.dataset.seg === focus); r.classList.toggle("focus-off", r.dataset.seg === focus && !on.includes(focus)); });
+      code.innerHTML = tex(`wxyz = ${d.toString(2).padStart(4, "0")}`) + ` → ${d}`;
+      cap2.innerHTML = focus ? `digit ${d}: ${tex(focus)} = ${on.includes(focus) ? 1 : 0}` : "";
+      cap2.className = "segd-cap " + (focus ? (on.includes(focus) ? "is1" : "is0") : "");
+      chips.innerHTML = seen ? Array.from({ length: 10 }, (_, k) => `<span class="${seen.includes(k) ? (SEG_ON[k].includes(focus) ? "c1" : "c0") : "cx"}">${k}</span>`).join("") : "";
+    };
+    items.push({ at: b.at ?? 0, phase: "anim", node: wrap, show() { wrap.classList.remove("hidden"); }, hide() { wrap.classList.add("hidden"); }, async play() { wrap.classList.remove("hidden"); } });
+    wrap.classList.add("hidden");
+    items.push({
+      at: -1, phase: "state", node: wrap,
+      state(s, animate, rate) {
+        const my = (this.tok = (this.tok ?? 0) + 1);
+        let digit = 8, focus, cyc = null;
+        (b.show ?? []).forEach((x) => { if (s >= x.at) { digit = x.d; focus = x.focus; } });
+        (b.cycle ?? []).forEach((x) => { if (s >= x.at) cyc = x; });
+        if (!cyc) { show(digit, focus, null); return 0; }
+        const all = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+        if (!animate || cyc.at !== s) { show(9, cyc.focus, all); return 0; }
+        (async () => { for (const d of all) { if (my !== this.tok) return; show(d, cyc.focus, all.slice(0, d + 1)); await wait(520 / rate); } })();
+        return 0;
+      },
+    });
+    return wrap;
+  }
+
   /* ======================= layout ======================= */
   function block(b, items, page) {
     switch (b.t) {
@@ -556,6 +624,7 @@
       case "table": return table(b, items);
       case "kmap": return kmap(b, items);
       case "add": return addition(b, items);
+      case "seg": return segDisplay(b, items);
       case "circ": return circuit(b, items, page);
       case "row": { const r = el("div", "row"); b.items.forEach((x) => r.appendChild(block(x, items, page))); return r; }
       case "zoom": return block(b.b, items, page);
@@ -567,6 +636,16 @@
     create(container, page) {
       const items = [];
       page.tryables = [];
+      if (page.kind === "title") {
+        container.classList.add("title-page");
+        const t = el("div", "title-block", `<div class="tp-part">${esc(page.part ?? "")}</div><div class="tp-title">${mixed(page.title)}</div><div class="tp-ar" dir="rtl">${esc(page.ar)}</div>`);
+        page.cols.flat().forEach((b) => t.appendChild(block(b, items, page)));
+        container.appendChild(t);
+        return { items, fit() {}, async setStep(s, animate, rate = 1) {
+          items.forEach((it) => { if (it.at < s || (it.at === s && !animate)) it.show(); else it.hide(); });
+          if (animate) for (const it of items.filter((x) => x.at === s)) await it.play(rate);
+        } };
+      }
       const cols = page.cols.map((col, ci) => {
         const c = el("div", "col");
         c.style.flex = page.w[ci] ?? 1;
